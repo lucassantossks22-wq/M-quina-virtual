@@ -1,0 +1,144 @@
+#Requires -RunAsAdministrator
+
+$ErrorActionPreference = "Stop"
+
+# ============================================================
+# WINDOWS VM + ANYDESK
+# Instalação automática
+# ============================================================
+
+$TempDir = "$env:TEMP\AnyDeskSetup"
+$Installer = "$TempDir\AnyDesk.exe"
+
+$AnyDeskURL = "https://download.anydesk.com/AnyDesk.exe"
+
+$InstallDir = "C:\Program Files (x86)\AnyDesk"
+
+Write-Host ""
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host "        WINDOWS REMOTE PC + ANYDESK" -ForegroundColor Cyan
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host ""
+
+# ------------------------------------------------------------
+# 1. Verificar Windows
+# ------------------------------------------------------------
+
+Write-Host "[1/6] Verificando Windows..."
+
+$OS = Get-CimInstance Win32_OperatingSystem
+
+Write-Host "Sistema: $($OS.Caption)"
+Write-Host "Versão:  $($OS.Version)"
+
+# ------------------------------------------------------------
+# 2. Criar pasta temporária
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "[2/6] Preparando instalação..."
+
+if (Test-Path $TempDir) {
+    Remove-Item $TempDir -Recurse -Force
+}
+
+New-Item `
+    -Path $TempDir `
+    -ItemType Directory `
+    -Force | Out-Null
+
+# ------------------------------------------------------------
+# 3. Baixar AnyDesk oficial
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "[3/6] Baixando AnyDesk..."
+
+Invoke-WebRequest `
+    -Uri $AnyDeskURL `
+    -OutFile $Installer
+
+if (!(Test-Path $Installer)) {
+    throw "Não foi possível baixar o instalador."
+}
+
+Write-Host "Download concluído." -ForegroundColor Green
+
+# ------------------------------------------------------------
+# 4. Instalar
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "[4/6] Instalando AnyDesk..."
+
+Start-Process `
+    -FilePath $Installer `
+    -ArgumentList @(
+        "--install",
+        $InstallDir,
+        "--silent",
+        "--start-with-win",
+        "--create-desktop-icon"
+    ) `
+    -Wait
+
+Start-Sleep -Seconds 10
+
+$AnyDesk = Join-Path $InstallDir "AnyDesk.exe"
+
+if (!(Test-Path $AnyDesk)) {
+    throw "AnyDesk não foi encontrado após a instalação."
+}
+
+Write-Host "AnyDesk instalado." -ForegroundColor Green
+
+# ------------------------------------------------------------
+# 5. Iniciar AnyDesk
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "[5/6] Iniciando AnyDesk..."
+
+Start-Process `
+    -FilePath $AnyDesk `
+    -WindowStyle Hidden
+
+Start-Sleep -Seconds 8
+
+# ------------------------------------------------------------
+# 6. Obter ID
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "[6/6] Obtendo ID do AnyDesk..."
+
+$AnyDeskID = & $AnyDesk --get-id 2>$null
+
+$AnyDeskID = ($AnyDeskID | Out-String).Trim()
+
+Write-Host ""
+Write-Host "================================================" -ForegroundColor Green
+Write-Host "             INSTALAÇÃO CONCLUÍDA" -ForegroundColor Green
+Write-Host "================================================" -ForegroundColor Green
+Write-Host ""
+
+Write-Host "SEU ID ANYDESK:" -ForegroundColor Yellow
+Write-Host ""
+Write-Host $AnyDeskID -ForegroundColor Cyan
+Write-Host ""
+
+Write-Host "================================================"
+Write-Host ""
+Write-Host "Agora abra o AnyDesk."
+Write-Host ""
+Write-Host "Configure:"
+Write-Host "Settings"
+Write-Host "  -> Access"
+Write-Host "     -> Unattended Access"
+Write-Host ""
+Write-Host "Lczinxzn."
+Write-Host ""
+Write-Host "Lczinxzn."
+Write-Host ""
+
+Read-Host "Pressione ENTER para sair"
